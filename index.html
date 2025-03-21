@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
     <title>MamãoChat - Cadastro e Acesso</title>
     <style>
         body {
@@ -51,7 +52,7 @@
         .user { color: #007bff; }
         #chat-container { display: none; }
         #login-container {
-            display: none; /* Começa escondido até a animação acabar */
+            display: none;
             border: 2px solid #333;
             padding: 20px;
             background-color: #fff;
@@ -73,6 +74,30 @@
             cursor: pointer;
         }
         #visitor-btn { background-color: #28a745; color: white; }
+        #client-area, #store-area {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+        #product-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .product-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .product-item img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        #nav-buttons {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -93,6 +118,21 @@
     </div>
     <div id="chat-container">
         <div id="messages" aria-live="polite"></div>
+        <div id="client-area">
+            <h3>Ofertas</h3>
+            <div id="product-list"></div>
+        </div>
+        <div id="store-area">
+            <h3>Gerenciar Estoque</h3>
+            <input type="text" id="product-name" placeholder="Nome do produto">
+            <input type="text" id="product-price" placeholder="Preço (ex.: 29.90)">
+            <input type="file" id="product-image" accept="image/*">
+            <button onclick="addProduct()">Adicionar</button>
+        </div>
+        <div id="nav-buttons">
+            <button onclick="showArea('client')" aria-label="Ver Ofertas">🛍️ Ofertas</button>
+            <button onclick="showArea('store')" aria-label="Gerenciar Estoque">📦 Estoque</button>
+        </div>
         <input type="text" id="chat-input" placeholder="Digite aqui..." aria-label="Campo de entrada de texto">
         <button onclick="sendMessage()" aria-label="Enviar mensagem">Enviar</button>
     </div>
@@ -103,6 +143,9 @@
         const loginContainer = document.getElementById("login-container");
         const chatContainer = document.getElementById("chat-container");
         const messagesDiv = document.getElementById("messages");
+        const clientArea = document.getElementById("client-area");
+        const storeArea = document.getElementById("store-area");
+        const productList = document.getElementById("product-list");
         const chatInput = document.getElementById("chat-input");
         const nameInput = document.getElementById("name-input");
         const passwordInput = document.getElementById("password-input");
@@ -110,22 +153,21 @@
         let userType = null;
         let state = "login";
         let username = "";
+        let products = JSON.parse(localStorage.getItem("products")) || [];
 
         const users = {
             clients: { "joao": "123", "maria": "456" },
             stores: { "loja1": "AB", "loja2": "CD" }
         };
 
-        // Animação inicial simplificada
         document.addEventListener("DOMContentLoaded", function() {
-            console.log("Iniciando animação");
             introScreen.classList.add("door-open");
             cartIcon.textContent = "👍";
             setTimeout(() => {
-                console.log("Animação concluída");
-                introScreen.style.display = "none"; // Força esconder
-                loginContainer.style.display = "block"; // Força mostrar
+                introScreen.style.display = "none";
+                loginContainer.style.display = "block";
             }, 2000);
+            updateProductList();
         });
 
         function setUserType(type) {
@@ -136,7 +178,6 @@
         }
 
         function startAsVisitor() {
-            console.log("Iniciando como visitante");
             userType = "visitor";
             username = "Visitante";
             startChat();
@@ -173,14 +214,14 @@
         }
 
         function startChat() {
-            console.log("Chat iniciado para:", username);
             loginContainer.style.display = "none";
             chatContainer.style.display = "block";
-            addMessage(`Bem-vindo ao MamãoChat, ${username}!\n${userType === "visitor" ? "Digite 'sair' pra voltar." : userType === "client" ? "Digite: gás, ofertas ou sair" : "Digite: estoque ou sair"}`, "bot");
+            addMessage(`Bem-vindo ao MamãoChat, ${username}!\n${userType === "visitor" ? "Digite 'sair' pra voltar." : userType === "client" ? "Digite: gás, clientes ou sair" : "Digite: estoque, lojistas ou sair"}`, "bot");
+            if (userType === "client") showArea("client");
+            if (userType === "store") showArea("store");
         }
 
         function addMessage(text, sender) {
-            console.log("Adicionando mensagem:", text);
             const message = document.createElement("div");
             message.classList.add(sender);
             message.textContent = text;
@@ -215,8 +256,9 @@
                 if (input === "gás") {
                     addMessage("Gás a R$150. Quantos você quer?", "bot");
                     state = "awaitingQuantity";
-                } else if (input === "ofertas") {
-                    addMessage("Ofertas:\n- Limão: R$3/kg\n- Laranja: R$4/kg\nDigite o item.", "bot");
+                } else if (input === "clientes") {
+                    showArea("client");
+                    addMessage("Veja as ofertas na ala dos clientes!", "bot");
                 } else if (input === "sair") {
                     addMessage("Até logo!", "bot");
                     chatContainer.style.display = "none";
@@ -226,13 +268,16 @@
                     userType = null;
                     state = "login";
                 } else {
-                    addMessage("Digite: gás, ofertas ou sair", "bot");
+                    addMessage("Digite: gás, clientes ou sair", "bot");
                 }
             }
 
             if (userType === "store" && state === "login") {
                 if (input === "estoque") {
-                    addMessage("Estoque:\n- Gás: R$150\n- Limão: R$3/kg", "bot");
+                    addMessage("Estoque:\n" + products.map(p => `- ${p.name}: R$${p.price}`).join("\n"), "bot");
+                } else if (input === "lojistas") {
+                    showArea("store");
+                    addMessage("Gerencie o estoque na ala dos lojistas!", "bot");
                 } else if (input === "sair") {
                     addMessage("Até logo!", "bot");
                     chatContainer.style.display = "none";
@@ -242,9 +287,52 @@
                     userType = null;
                     state = "login";
                 } else {
-                    addMessage("Digite: estoque ou sair", "bot");
+                    addMessage("Digite: estoque, lojistas ou sair", "bot");
                 }
             }
+        }
+
+        function addProduct() {
+            const name = document.getElementById("product-name").value.trim();
+            const price = document.getElementById("product-price").value.trim();
+            const imageInput = document.getElementById("product-image");
+            const image = imageInput.files[0];
+
+            if (name && price && image) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const product = {
+                        name: name,
+                        price: price,
+                        image: e.target.result
+                    };
+                    products.push(product);
+                    localStorage.setItem("products", JSON.stringify(products));
+                    updateProductList();
+                    addMessage(`Produto "${name}" adicionado ao estoque!`, "bot");
+                    document.getElementById("product-name").value = "";
+                    document.getElementById("product-price").value = "";
+                    imageInput.value = "";
+                };
+                reader.readAsDataURL(image);
+            } else {
+                addMessage("Preencha todos os campos pra adicionar um produto!", "bot");
+            }
+        }
+
+        function updateProductList() {
+            productList.innerHTML = "";
+            products.forEach(product => {
+                const div = document.createElement("div");
+                div.className = "product-item";
+                div.innerHTML = `<img src="${product.image}" alt="${product.name}"> ${product.name} - R$${product.price}`;
+                productList.appendChild(div);
+            });
+        }
+
+        function showArea(area) {
+            clientArea.style.display = area === "client" ? "block" : "none";
+            storeArea.style.display = area === "store" ? "block" : "none";
         }
 
         nameInput.addEventListener("keypress", (e) => {
