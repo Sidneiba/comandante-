@@ -5,164 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="manifest.json">
     <title>MamãoChat - Cadastro e Acesso</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
-        body {
-            margin: 0;
-            padding: 10px;
-            font-family: sans-serif;
-            background-color: #f0f0f0;
-            color: #333;
-            font-size: 1rem;
-        }
-        #intro-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .door {
-            width: 50%;
-            height: 100%;
-            background-color: #8B4513;
-            position: absolute;
-            transition: transform 2s ease;
-        }
+        body { background-color: #f0f0f0; color: #333; }
+        #intro-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #333; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .door { width: 50%; height: 100%; background-color: #8B4513; position: absolute; transition: transform 2s ease; }
         .door-left { left: 0; transform-origin: left; }
         .door-right { right: 0; transform-origin: right; }
         .door-open .door-left { transform: translateX(-100%); }
         .door-open .door-right { transform: translateX(100%); }
         #cart-icon { font-size: 100px; color: gold; position: absolute; z-index: 1001; }
         .hidden { display: none; }
-        #messages {
-            border: 1px solid #ccc;
-            padding: 10px;
-            background-color: #fff;
-            min-height: 200px;
-            margin-bottom: 10px;
-            white-space: pre-wrap;
-            overflow-y: auto;
-        }
+        #messages { border: 1px solid #ccc; padding: 10px; background-color: #fff; min-height: 200px; margin-bottom: 10px; white-space: pre-wrap; overflow-y: auto; }
         .bot { color: #333; }
         .user { color: #007bff; }
         #chat-container { display: none; }
-        #login-container {
-            display: none;
-            border: 2px solid #333;
-            padding: 20px;
-            background-color: #fff;
-            width: 300px;
-            margin: 20px auto;
-            text-align: center;
-        }
-        #login-container h2 { margin: 0 0 20px; }
-        input {
-            padding: 5px;
-            width: 80%;
-            margin: 5px 0;
-            font-size: 1rem;
-        }
-        button {
-            padding: 5px 10px;
-            margin: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        #visitor-btn { background-color: #28a745; color: white; }
-        #client-area, #store-area {
-            display: none;
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-        }
-        #product-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .product-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .product-item img {
-            width: 50px;
-            height: 50px;
-            margin-right: 10px;
-        }
-        #nav-buttons {
-            margin-top: 10px;
-        }
+        #login-container { display: none; padding: 20px; background-color: #fff; width: 300px; margin: 20px auto; text-align: center; border: 2px solid #333; }
+        #client-area, #store-area { display: none; margin-top: 10px; padding: 10px; background-color: #fff; border: 1px solid #ccc; }
+        #product-list { max-height: 300px; overflow-y: auto; }
+        .product-item { display: flex; align-items: center; margin-bottom: 10px; }
+        .product-item img { width: 50px; height: 50px; margin-right: 10px; }
+        #call-area { display: none; margin: 20px; }
     </style>
 </head>
 <body>
-    <div id="intro-screen" aria-hidden="true">
-        <div class="door door-left" aria-hidden="true"></div>
-        <div class="door door-right" aria-hidden="true"></div>
-        <span id="cart-icon" aria-label="Ícone do carrinho" role="img">🛒</span>
+    <div id="intro-screen">
+        <div class="door door-left"></div>
+        <div class="door door-right"></div>
+        <span id="cart-icon">🛒</span>
     </div>
     <div id="login-container">
         <h2>Faça seu cadastro</h2>
-        <input type="text" id="name-input" placeholder="Nome" aria-label="Nome">
-        <input type="text" id="password-input" placeholder="Senha" aria-label="Senha">
+        <input type="text" id="name-input" class="form-control" placeholder="Nome">
+        <input type="text" id="password-input" class="form-control" placeholder="Senha">
         <div>
-            <button id="client-btn" onclick="setUserType('client')">Cliente</button>
-            <button id="store-btn" onclick="setUserType('store')">Lojista</button>
-            <button id="visitor-btn" onclick="startAsVisitor()">Visitante</button>
+            <button id="client-btn" class="btn btn-primary" onclick="setUserType('client')">Cliente</button>
+            <button id="store-btn" class="btn btn-primary" onclick="setUserType('store')">Lojista</button>
+            <button id="visitor-btn" class="btn btn-success" onclick="startAsVisitor()">Visitante</button>
         </div>
     </div>
-    <div id="chat-container">
-        <div id="messages" aria-live="polite"></div>
+    <div id="chat-container" class="container">
+        <div id="messages" class="card"></div>
         <div id="client-area">
             <h3>Ofertas</h3>
             <div id="product-list"></div>
+            <button class="btn btn-primary" onclick="iniciarChamada(1)">Ligar pro Lojista</button>
         </div>
         <div id="store-area">
             <h3>Gerenciar Estoque</h3>
-            <input type="text" id="product-name" placeholder="Nome do produto">
-            <input type="text" id="product-price" placeholder="Preço (ex.: 29.90)">
-            <input type="file" id="product-image" accept="image/*">
-            <button onclick="addProduct()">Adicionar</button>
+            <input type="text" id="product-name" class="form-control" placeholder="Nome do produto">
+            <input type="text" id="product-price" class="form-control" placeholder="Preço (ex.: 29.90)">
+            <input type="file" id="product-image" class="form-control" accept="image/*">
+            <button class="btn btn-primary" onclick="addProduct()">Adicionar</button>
+        </div>
+        <div id="call-area">
+            <p>Em ligação com <span id="destinatario"></span></p>
+            <audio id="audio" autoplay></audio>
+            <button class="btn btn-secondary" onclick="silenciar()">Silenciar</button>
+            <button class="btn btn-danger" onclick="encerrar()">Encerrar</button>
         </div>
         <div id="nav-buttons">
-            <button onclick="showArea('client')" aria-label="Ver Ofertas">🛍️ Ofertas</button>
-            <button onclick="showArea('store')" aria-label="Gerenciar Estoque">📦 Estoque</button>
+            <button class="btn btn-outline-primary" onclick="showArea('client')">🛍️ Ofertas</button>
+            <button class="btn btn-outline-primary" onclick="showArea('store')">📦 Estoque</button>
         </div>
-        <input type="text" id="chat-input" placeholder="Digite aqui..." aria-label="Campo de entrada de texto">
-        <button onclick="sendMessage()" aria-label="Enviar mensagem">Enviar</button>
+        <input type="text" id="chat-input" class="form-control" placeholder="Digite aqui...">
+        <button class="btn btn-primary" onclick="sendMessage()">Enviar</button>
     </div>
 
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
     <script>
+        const socket = io.connect('https://mamao-chat.railway.app');
+        const peer = new Peer();
+        let call, userId;
+
+        peer.on('open', id => userId = id);
+
         const introScreen = document.getElementById("intro-screen");
-        const cartIcon = document.getElementById("cart-icon");
         const loginContainer = document.getElementById("login-container");
         const chatContainer = document.getElementById("chat-container");
         const messagesDiv = document.getElementById("messages");
         const clientArea = document.getElementById("client-area");
         const storeArea = document.getElementById("store-area");
-        const productList = document.getElementById("product-list");
-        const chatInput = document.getElementById("chat-input");
-        const nameInput = document.getElementById("name-input");
-        const passwordInput = document.getElementById("password-input");
+        const callArea = document.getElementById("call-area");
+        let userType = null, username = "", products = JSON.parse(localStorage.getItem("products")) || [];
 
-        let userType = null;
-        let state = "login";
-        let username = "";
-        let products = JSON.parse(localStorage.getItem("products")) || [];
+        const users = { clients: { "joao": "123" }, stores: { "loja1": "AB" } };
 
-        const users = {
-            clients: { "joao": "123", "maria": "456" },
-            stores: { "loja1": "AB", "loja2": "CD" }
-        };
-
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", () => {
             introScreen.classList.add("door-open");
-            cartIcon.textContent = "👍";
             setTimeout(() => {
                 introScreen.style.display = "none";
                 loginContainer.style.display = "block";
@@ -172,51 +103,25 @@
 
         function setUserType(type) {
             userType = type;
-            passwordInput.placeholder = type === "client" ? "Senha (3 dígitos)" : "Senha (2 letras)";
-            passwordInput.maxLength = type === "client" ? 3 : 2;
             checkLogin();
         }
 
         function startAsVisitor() {
-            userType = "visitor";
-            username = "Visitante";
-            startChat();
+            userType = "visitor"; username = "Visitante"; startChat();
         }
 
         function checkLogin() {
-            const name = nameInput.value.trim();
-            const password = passwordInput.value.trim();
-
+            const name = document.getElementById("name-input").value.trim();
+            const password = document.getElementById("password-input").value.trim();
             if (!name || !password || !userType) return;
-
-            const userGroup = userType === "client" ? "clients" : "stores";
-            const isClient = userType === "client";
-            const passwordValid = isClient ? /^\d{3}$/.test(password) : /^[A-Za-z]{2}$/.test(password);
-
-            if (!passwordValid) {
-                alert(`Senha inválida! ${isClient ? "Use 3 dígitos." : "Use 2 letras."}`);
-                return;
-            }
-
-            if (users[userGroup][name]) {
-                if (users[userGroup][name] === password) {
-                    username = name;
-                    startChat();
-                } else {
-                    alert("Senha incorreta!");
-                }
-            } else {
-                users[userGroup][name] = password;
-                username = name;
-                console.log(`Novo ${userType} cadastrado: ${name} - ${password}`);
-                startChat();
-            }
+            username = name;
+            startChat();
         }
 
         function startChat() {
             loginContainer.style.display = "none";
             chatContainer.style.display = "block";
-            addMessage(`Bem-vindo ao MamãoChat, ${username}!\n${userType === "visitor" ? "Digite 'sair' pra voltar." : userType === "client" ? "Digite: gás, clientes ou sair" : "Digite: estoque, lojistas ou sair"}`, "bot");
+            addMessage(`Bem-vindo, ${username}!`, "bot");
             if (userType === "client") showArea("client");
             if (userType === "store") showArea("store");
         }
@@ -230,65 +135,10 @@
         }
 
         function sendMessage() {
-            const text = chatInput.value.trim().toLowerCase();
+            const text = document.getElementById("chat-input").value.trim();
             if (text) {
                 addMessage(text, "user");
-                processInput(text);
-                chatInput.value = "";
-            }
-        }
-
-        function processInput(input) {
-            if (userType === "visitor") {
-                if (input === "sair") {
-                    chatContainer.style.display = "none";
-                    loginContainer.style.display = "block";
-                    nameInput.value = "";
-                    passwordInput.value = "";
-                    userType = null;
-                } else {
-                    addMessage("Como visitante, você só pode 'sair' por enquanto.", "bot");
-                }
-                return;
-            }
-
-            if (userType === "client" && state === "login") {
-                if (input === "gás") {
-                    addMessage("Gás a R$150. Quantos você quer?", "bot");
-                    state = "awaitingQuantity";
-                } else if (input === "clientes") {
-                    showArea("client");
-                    addMessage("Veja as ofertas na ala dos clientes!", "bot");
-                } else if (input === "sair") {
-                    addMessage("Até logo!", "bot");
-                    chatContainer.style.display = "none";
-                    loginContainer.style.display = "block";
-                    nameInput.value = "";
-                    passwordInput.value = "";
-                    userType = null;
-                    state = "login";
-                } else {
-                    addMessage("Digite: gás, clientes ou sair", "bot");
-                }
-            }
-
-            if (userType === "store" && state === "login") {
-                if (input === "estoque") {
-                    addMessage("Estoque:\n" + products.map(p => `- ${p.name}: R$${p.price}`).join("\n"), "bot");
-                } else if (input === "lojistas") {
-                    showArea("store");
-                    addMessage("Gerencie o estoque na ala dos lojistas!", "bot");
-                } else if (input === "sair") {
-                    addMessage("Até logo!", "bot");
-                    chatContainer.style.display = "none";
-                    loginContainer.style.display = "block";
-                    nameInput.value = "";
-                    passwordInput.value = "";
-                    userType = null;
-                    state = "login";
-                } else {
-                    addMessage("Digite: estoque, lojistas ou sair", "bot");
-                }
+                document.getElementById("chat-input").value = "";
             }
         }
 
@@ -297,26 +147,14 @@
             const price = document.getElementById("product-price").value.trim();
             const imageInput = document.getElementById("product-image");
             const image = imageInput.files[0];
-
             if (name && price && image) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const product = {
-                        name: name,
-                        price: price,
-                        image: e.target.result
-                    };
-                    products.push(product);
+                    products.push({ name, price, image: e.target.result });
                     localStorage.setItem("products", JSON.stringify(products));
                     updateProductList();
-                    addMessage(`Produto "${name}" adicionado ao estoque!`, "bot");
-                    document.getElementById("product-name").value = "";
-                    document.getElementById("product-price").value = "";
-                    imageInput.value = "";
                 };
                 reader.readAsDataURL(image);
-            } else {
-                addMessage("Preencha todos os campos pra adicionar um produto!", "bot");
             }
         }
 
@@ -335,14 +173,37 @@
             storeArea.style.display = area === "store" ? "block" : "none";
         }
 
-        nameInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") passwordInput.focus();
+        function iniciarChamada(lojistaId) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    call = peer.call('lojista_' + lojistaId, stream);
+                    callArea.style.display = "block";
+                    document.getElementById("destinatario").innerText = 'Mercado do Bairro';
+                    call.on('stream', remoteStream => {
+                        document.getElementById("audio").srcObject = remoteStream;
+                    });
+                    socket.emit('iniciar_chamada', { cliente_id: userId, lojista_id: lojistaId });
+                });
+        }
+
+        peer.on('call', incomingCall => {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    incomingCall.answer(stream);
+                    call = incomingCall;
+                    callArea.style.display = "block";
+                    document.getElementById("destinatario").innerText = 'Cliente';
+                    call.on('stream', remoteStream => {
+                        document.getElementById("audio").srcObject = remoteStream;
+                    });
+                });
         });
-        passwordInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") checkLogin();
-        });
-        chatInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") sendMessage();
+
+        function silenciar() { call.localStream.getAudioTracks()[0].enabled = !call.localStream.getAudioTracks()[0].enabled; }
+        function encerrar() { call.close(); callArea.style.display = "none"; }
+
+        socket.on('chamada_entrante', data => {
+            addMessage(`Chamada de ${data.cliente_id}`, "bot");
         });
     </script>
 </body>
